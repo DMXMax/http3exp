@@ -3,12 +3,12 @@
 set -e
 
 echo "Generating CA key and certificate:"
-openssl req -x509 -sha256 -nodes -days 7 -newkey rsa:2048 \
+openssl req -x509 -sha256 -noenc -days 7 -newkey rsa:2048 \
   -keyout ca.key -out ca.pem \
   -subj "/O=quic-go Certificate Authority/"
 
 echo "Generating CSR"
-openssl req -out cert.csr -new -newkey rsa:2048 -nodes -keyout private.key \
+openssl req -out cert.csr -new -newkey rsa:2048 -noenc -keyout private.key \
   -subj "/O=quic-go/"
 
 echo "Sign certificate:"

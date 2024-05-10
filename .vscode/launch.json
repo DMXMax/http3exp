@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/main.go",
-            "args": ["-s","2"]
+            "args": ["-s","3"]
         },
         {
             "name": "Debug Client",
@@ -18,7 +18,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
-            "args": ["-c"]   
+            "args": ["-c", "1", "-s", "3"]   
         }
     ]
 }

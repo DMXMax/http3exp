@@ -2,7 +2,6 @@ package client
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -15,11 +14,12 @@ import (
 	"http3test/util"
 
 	"github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 )
 
 var ErrorClientVersion = fmt.Errorf("invalid client version")
 var clientArray = []func(){client0, client1}
-var addr = "https://localhost:8443"
+var addr = "localhost:8443"
 
 func RunClient(clientVersion int) error {
 	if clientVersion >= len(clientArray) {
@@ -52,7 +52,7 @@ func client0() {
 	}
 	_ = currentPath
 
-	rsp, err := client.Get(addr)
+	rsp, err := client.Get(fmt.Sprintf("https://%s", addr))
 	if err != nil {
 		panic(err)
 	}
@@ -68,14 +68,39 @@ func client0() {
 	log.Printf("Response body %s \n", body.Bytes())
 }
 func client1() {
+	tlsConf := &tls.Config{
+		RootCAs:    getRootCA(util.GetCertFilePath("certs/cert.pem")),
+		NextProtos: []string{"quic-echo-example"},
+	}
+
+	roundTripper := &http3.RoundTripper{
+		TLSClientConfig: tlsConf,
+		QuicConfig:      &quic.Config{},
+	}
+	client := &http.Client{
+		Transport: roundTripper,
+	}
+	resp, err := client.Get(fmt.Sprintf("https://%s", addr))
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Client: Got '%s'\n", data)
+
+}
+
+/*func client1() {
 	var message = "hello"
-	addr := "localhost:8443"
 	tlsConf := &tls.Config{
 		RootCAs: getRootCA(util.GetCertFilePath("certs/cert.pem")),
 		//InsecureSkipVerify: true,
 		NextProtos: []string{"quic-echo-example"},
 	}
-	conn, err := quic.DialAddr(context.Background(), addr, tlsConf, nil)
+	conn, err := quic.DialAddr(context.Background(), "localhost:8443", tlsConf, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -97,7 +122,8 @@ func client1() {
 		panic(err)
 	}
 	fmt.Printf("Client: Got '%s'\n", buf)
-}
+}*/
+
 func getRootCA(certPath string) *x509.CertPool {
 	caCertRaw, err := os.ReadFile(certPath)
 	if err != nil {

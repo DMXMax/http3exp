@@ -31,6 +31,8 @@ func main() {
 	}
 
 	// block forever
-	//select {}
+	if clientVersion == -1 {
+		select {}
+	}
 
 }

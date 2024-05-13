@@ -10,14 +10,16 @@ import (
 	"os"
 	"path"
 
+	"http3test/util"
+
 	"github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 )
 
-const cert = "./certs/cert.pem"
-const key = "./certs/private.key"
+const certPath = "certs/cert.pem"
+const keyPath = "certs/private.key"
 
-var addr = `0.0.0.0:443`
+var addr = `0.0.0.0:8443`
 
 var ErrInvalidServerType = fmt.Errorf("invalid server type")
 
@@ -41,8 +43,10 @@ func server0() {
 	/*if len(os.Args) > 1 {
 		addr = os.Args[1]
 	}*/
+	// get the current working director
+
 	log.Println("server 0 listens and servers HTTPS")
-	log.Fatal(http.ListenAndServeTLS(addr, cert, key, nil))
+	log.Fatal(http.ListenAndServeTLS(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), nil))
 }
 
 // Server 1 is the most polite QUIC server. It listens on TCP and politely
@@ -58,7 +62,7 @@ func server1() {
 		addr = os.Args[1]
 	}*/
 	log.Println("server 1 listens and servers HTTP/3")
-	log.Fatal(http3.ListenAndServe(addr, cert, key, nil))
+	log.Fatal(http3.ListenAndServe(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), nil))
 
 }
 
@@ -79,7 +83,7 @@ func server2() {
 
 	log.Println("Listening on", addr)
 	log.Println("server 2 listens and servers QUIC")
-	log.Fatal(http3.ListenAndServeQUIC(addr, cert, key, mux))
+	log.Fatal(http3.ListenAndServeQUIC(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), mux))
 }
 
 // server3 is a QUIC server that echos all data on the first stream opened by the client

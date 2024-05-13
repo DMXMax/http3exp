@@ -11,14 +11,15 @@ import (
 
 	"net/http"
 	"os"
-	"path"
+
+	"http3test/util"
 
 	"github.com/quic-go/quic-go"
 )
 
 var ErrorClientVersion = fmt.Errorf("invalid client version")
 var clientArray = []func(){client0, client1}
-var addr = "https://localhost:443"
+var addr = "https://localhost:8443"
 
 func RunClient(clientVersion int) error {
 	if clientVersion >= len(clientArray) {
@@ -37,9 +38,10 @@ func client0() {
 	if err != nil {
 		panic(err)
 	}
+
 	roundTripper := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			RootCAs: getRootCA(currentPath),
+			RootCAs: getRootCA(util.GetCertFilePath("certs/cert.pem")),
 			//InsecureSkipVerify: true,
 		},
 	}
@@ -49,7 +51,7 @@ func client0() {
 		Transport: roundTripper,
 	}
 	_ = currentPath
-	addr := "https://localhost:443"
+
 	rsp, err := client.Get(addr)
 	if err != nil {
 		panic(err)
@@ -68,12 +70,8 @@ func client0() {
 func client1() {
 	var message = "hello"
 	addr := "localhost:8443"
-	currentPath, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
 	tlsConf := &tls.Config{
-		RootCAs: getRootCA(currentPath),
+		RootCAs: getRootCA(util.GetCertFilePath("certs/cert.pem")),
 		//InsecureSkipVerify: true,
 		NextProtos: []string{"quic-echo-example"},
 	}
@@ -101,8 +99,7 @@ func client1() {
 	fmt.Printf("Client: Got '%s'\n", buf)
 }
 func getRootCA(certPath string) *x509.CertPool {
-	caCertPath := path.Join(certPath, "certs/cert.pem")
-	caCertRaw, err := os.ReadFile(caCertPath)
+	caCertRaw, err := os.ReadFile(certPath)
 	if err != nil {
 		panic(err)
 	}

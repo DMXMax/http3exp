@@ -104,16 +104,6 @@ func getRootCA(certPath string) *x509.CertPool {
 		panic(err)
 	}
 
-	//p, _ := pem.Decode(caCertRaw)
-	/*if p.Type != "CERTIFICATE" {
-		panic("expected a certificate")
-	}*/
-
-	/*	caCert, err := x509.ParseCertificate(p.Bytes)
-		if err != nil {
-			panic(err)
-		} */
-
 	certPool := x509.NewCertPool()
 	ok := certPool.AppendCertsFromPEM(caCertRaw)
 

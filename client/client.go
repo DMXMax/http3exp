@@ -76,18 +76,24 @@ func client0() {
 	}
 	_ = currentPath
 
-	rsp, err := client.Get(fmt.Sprintf("https://%s", addr))
+	client0Get(client, fmt.Sprintf("https://%s", addr))
+	client0Get(client, fmt.Sprintf("https://%s/endpoint-one", addr))
+}
+
+func client0Get(client *http.Client, endpoint string) {
+	rsp, err := client.Get(endpoint)
 	if err != nil {
 		panic(err)
 	}
-	defer rsp.Body.Close()
 
 	body := &bytes.Buffer{}
 	_, err = io.Copy(body, rsp.Body)
 	if err != nil {
 		panic(err)
 	}
+	rsp.Body.Close()
 
+	log.Println("Endpoint: ", endpoint)
 	log.Printf("Body length: %d bytes \n", body.Len())
 	log.Printf("Response body %s \n", body.Bytes())
 }
@@ -107,16 +113,31 @@ func client1() {
 	client := &http.Client{
 		Transport: roundTripper,
 	}
-	resp, err := client.Get(fmt.Sprintf("https://%s", addr))
+	endpoint := fmt.Sprintf("https://%s", addr)
+	data := clientOneGet(client, endpoint)
+	fmt.Printf("Client: %s Got '%s'\n", endpoint, data)
+
+	// next!
+	endpoint = fmt.Sprintf("https://%s/endpoint-one", addr)
+	data = clientOneGet(client, endpoint)
+
+	fmt.Printf("Client: %s Got '%s'\n", endpoint, data)
+
+}
+
+func clientOneGet(client *http.Client, endpoint string) string {
+	resp, err := client.Get(endpoint)
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
+
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
+	resp.Body.Close()
 	fmt.Printf("Client: Got '%s'\n", data)
+	return string(data)
 
 }
 

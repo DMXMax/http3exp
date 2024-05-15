@@ -19,7 +19,7 @@ import (
 const certPath = "certs/cert.pem"
 const keyPath = "certs/private.key"
 
-var addr = `0.0.0.0:8443`
+var addr = `localhost:8443`
 
 var ErrInvalidServerType = fmt.Errorf("invalid server type")
 
@@ -37,24 +37,41 @@ var Servers = []func(){server0, server1, server2, server3}
 // Server 0 does not use QUIC.
 func server0() {
 	serverName := "server 0"
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Greetings, %v from %s", r.URL.Path, serverName)
 	})
-	/*if len(os.Args) > 1 {
-		addr = os.Args[1]
-	}*/
-	// get the current working director
+	mux.HandleFunc("/endpoint-one", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, %v from %s", r.URL.Path, serverName)
+	})
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+
+	pair := getCertificatePair()
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{pair},
+		NextProtos:   []string{"http/1.1"},
+	}
+	srv.TLSConfig = tlsConfig
 
 	log.Println("server 0 listens and servers HTTPS")
-	log.Fatal(http.ListenAndServeTLS(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), nil))
+	//cert and keyfile can be empty because we set up our TLS config above
+	log.Fatal(srv.ListenAndServeTLS("", ""))
+
 }
 
 // Server 1 is the most polite QUIC server. It listens on TCP and politely
 // informs the client that it is using HTTP/3. Most modern browsers will handle this
 // server well.
 func server1() {
+
 	serverName := "server 1"
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Hello, %v from %s", r.URL.Path, serverName)
+	})
+	http.HandleFunc("/endpoint-one", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %v from %s", r.URL.Path, serverName)
 	})
 
@@ -62,6 +79,7 @@ func server1() {
 		addr = os.Args[1]
 	}*/
 	log.Println("server 1 listens and servers HTTP/3")
+	//must use http3 server to get TCP as well as QUIC
 	log.Fatal(http3.ListenAndServe(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), nil))
 
 }
@@ -77,27 +95,41 @@ func server2() {
 		//r.Header.Add("Content-Type", "application/json")
 		w.Write([]byte(fmt.Sprintf(`{"message": "Hello, %v from %s"}`, r.URL.Path, serverName)))
 	})
+	tls := &tls.Config{
+		Certificates: []tls.Certificate{getCertificatePair()},
+		NextProtos:   []string{"quic-echo-example"},
+	}
+	srv := &http3.Server{
+		Addr:       addr,
+		Handler:    mux,
+		TLSConfig:  http3.ConfigureTLSConfig(tls),
+		QuicConfig: &quic.Config{Allow0RTT: true},
+	}
 
 	// ... add HTTP handlers to mux ...
 	// If mux is nil, the http.DefaultServeMux is used.
 
 	log.Println("Listening on", addr)
 	log.Println("server 2 listens and servers QUIC")
-	log.Fatal(http3.ListenAndServeQUIC(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), mux))
+	//log.Fatal(http3.ListenAndServeQUIC(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), mux))
+	log.Fatal(srv.ListenAndServe())
 }
 
 // server3 is a QUIC server that echos all data on the first stream opened by the client
 // server 3 is NOT an HTTP server, so HTTP clients will have a hard time with it.
 func server3() {
 	addr := "localhost:8443"
-	currDir, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error: %v", err)
-	}
-	listener, err := quic.ListenAddr(addr, &tls.Config{
-		Certificates: []tls.Certificate{getCertificate(currDir)},
+
+	/*listener, err := quic.ListenAddr(addr, &tls.Config{
+		Certificates: []tls.Certificate{getCertificatePair()},
 		NextProtos:   []string{"quic-echo-example"},
-	}, nil)
+	},*/
+	listener, err := quic.ListenAddrEarly(addr, &tls.Config{
+		Certificates: []tls.Certificate{getCertificatePair()},
+		NextProtos:   []string{"quic-echo-example"},
+	}, &quic.Config{
+		Allow0RTT: true,
+	})
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}
@@ -130,10 +162,15 @@ func (w loggingWriter) Write(p []byte) (n int, err error) {
 	log.Printf("Got message: %s", p)
 	return w.Writer.Write(p)
 }
-func getCertificate(certPath string) tls.Certificate {
-	caCertPath := path.Join(certPath, "certs/cert.pem")
+func getCertificatePair() tls.Certificate {
+	currDir, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	caCertPath := path.Join(currDir, "certs/cert.pem")
+	caKeyPath := path.Join(currDir, "certs/private.key")
 
-	cert, err := tls.LoadX509KeyPair(caCertPath, path.Join(certPath, "certs/private.key"))
+	cert, err := tls.LoadX509KeyPair(caCertPath, caKeyPath)
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}

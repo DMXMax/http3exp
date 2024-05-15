@@ -18,7 +18,7 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
-            "args": ["-c", "2", "-s", "3"]   
+            "args": ["-c", "0", "-s", "1"]   
         }
     ]
 }

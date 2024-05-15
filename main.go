@@ -9,12 +9,13 @@ import (
 
 // Main starts the server
 func main() {
-	var clientVersion int
-	var curServer int
+	var clientVersion, curServer, repeats int
+
 	var err error
 
 	flag.IntVar(&clientVersion, "c", -1, "run as a client")
 	flag.IntVar(&curServer, "s", 0, "server type")
+	flag.IntVar(&repeats, "n", 1, "number of times to run the client")
 	flag.Parse()
 
 	// if the client flag is set to anything other than -1, run the client

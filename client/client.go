@@ -2,11 +2,13 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io"
 	"log"
+	"path"
 
 	"net/http"
 	"os"
@@ -18,16 +20,37 @@ import (
 )
 
 var ErrorClientVersion = fmt.Errorf("invalid client version")
-var clientArray = []func(){client0, client1}
+var clientArray = []func(){client0, client1, client2}
 var addr = "localhost:8443"
+var File *os.File
 
 func RunClient(clientVersion int) error {
 	if clientVersion >= len(clientArray) {
 		return ErrorClientVersion
 	}
 	if clientVersion > -1 {
+		var err error
+		// if you hard-code this file name, and its your home dir,
+		// your code leaks information about machine configureation.
+		// so, we use os.UserHomeDir
+		fn, err := os.UserHomeDir()
+		if err != nil {
+			panic(err)
+		}
+
+		fn = path.Join(fn, ".ssl-key.log")
+
+		//fn := "ssl-key.log"
+		File, err = os.OpenFile(fn, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+
+		if err != nil {
+			panic(err)
+		}
+		log.Printf("Log file %s created\n", fn)
+		defer File.Close()
 		clientArray[clientVersion]()
 		return nil
+
 	}
 	return nil
 }
@@ -41,7 +64,8 @@ func client0() {
 
 	roundTripper := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			RootCAs: getRootCA(util.GetCertFilePath("certs/cert.pem")),
+			RootCAs:      getRootCA(util.GetCertFilePath("certs/cert.pem")),
+			KeyLogWriter: File,
 			//InsecureSkipVerify: true,
 		},
 	}
@@ -67,10 +91,13 @@ func client0() {
 	log.Printf("Body length: %d bytes \n", body.Len())
 	log.Printf("Response body %s \n", body.Bytes())
 }
+
+// client 1 uses a https client, but with an http3 transport
 func client1() {
 	tlsConf := &tls.Config{
-		RootCAs:    getRootCA(util.GetCertFilePath("certs/cert.pem")),
-		NextProtos: []string{"quic-echo-example"},
+		RootCAs:      getRootCA(util.GetCertFilePath("certs/cert.pem")),
+		NextProtos:   []string{"quic-echo-example"},
+		KeyLogWriter: File,
 	}
 
 	roundTripper := &http3.RoundTripper{
@@ -93,10 +120,11 @@ func client1() {
 
 }
 
-/*func client1() {
+func client2() {
 	var message = "hello"
 	tlsConf := &tls.Config{
-		RootCAs: getRootCA(util.GetCertFilePath("certs/cert.pem")),
+		RootCAs:      getRootCA(util.GetCertFilePath("certs/cert.pem")),
+		KeyLogWriter: File,
 		//InsecureSkipVerify: true,
 		NextProtos: []string{"quic-echo-example"},
 	}
@@ -122,7 +150,7 @@ func client1() {
 		panic(err)
 	}
 	fmt.Printf("Client: Got '%s'\n", buf)
-}*/
+}
 
 func getRootCA(certPath string) *x509.CertPool {
 	caCertRaw, err := os.ReadFile(certPath)

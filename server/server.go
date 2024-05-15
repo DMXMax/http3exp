@@ -38,7 +38,7 @@ var Servers = []func(){server0, server1, server2, server3}
 func server0() {
 	serverName := "server 0"
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %v from %s", r.URL.Path, serverName)
+		fmt.Fprintf(w, "Greetings, %v from %s", r.URL.Path, serverName)
 	})
 	/*if len(os.Args) > 1 {
 		addr = os.Args[1]

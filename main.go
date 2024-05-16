@@ -5,6 +5,7 @@ import (
 	"http3test/client"
 	"http3test/server"
 	"log"
+	"time"
 )
 
 // Main starts the server
@@ -26,9 +27,14 @@ func main() {
 		log.Fatalf("Error: %v", err)
 	}
 
-	err = client.RunClient(clientVersion)
-	if err != nil {
-		log.Fatalf("Error: %v", err)
+	//lazy wait for server to come up
+	time.Sleep(1 * time.Second)
+
+	for _ = range repeats {
+		err = client.RunClient(clientVersion)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		}
 	}
 
 	// block forever

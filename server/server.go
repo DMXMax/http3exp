@@ -19,7 +19,7 @@ import (
 const certPath = "certs/cert.pem"
 const keyPath = "certs/private.key"
 
-var addr = `localhost:8443`
+var addr = `0.0.0.0:8443`
 
 var ErrInvalidServerType = fmt.Errorf("invalid server type")
 

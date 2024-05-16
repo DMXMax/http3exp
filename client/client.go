@@ -20,7 +20,7 @@ import (
 )
 
 var ErrorClientVersion = fmt.Errorf("invalid client version")
-var clientArray = []func(){client0, client1, client2}
+var clientArray = []func(){client0, client1, client2, client3}
 var addr = "localhost:8443"
 var File *os.File
 
@@ -57,10 +57,6 @@ func RunClient(clientVersion int) error {
 
 // Client 0 is a basic HTTPS client. It connects to a server using HTTPS.
 func client0() {
-	currentPath, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
 
 	roundTripper := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -74,7 +70,6 @@ func client0() {
 	client := &http.Client{
 		Transport: roundTripper,
 	}
-	_ = currentPath
 
 	client0Get(client, fmt.Sprintf("https://%s", addr))
 	client0Get(client, fmt.Sprintf("https://%s/endpoint-one", addr))
@@ -101,14 +96,15 @@ func client0Get(client *http.Client, endpoint string) {
 // client 1 uses a https client, but with an http3 transport
 func client1() {
 	tlsConf := &tls.Config{
-		RootCAs:      getRootCA(util.GetCertFilePath("certs/cert.pem")),
-		NextProtos:   []string{"quic-echo-example"},
-		KeyLogWriter: File,
+		RootCAs:            getRootCA(util.GetCertFilePath("certs/cert.pem")),
+		NextProtos:         []string{"quic-echo-example"},
+		KeyLogWriter:       File,
+		ClientSessionCache: tls.NewLRUClientSessionCache(100),
 	}
 
 	roundTripper := &http3.RoundTripper{
 		TLSClientConfig: tlsConf,
-		QuicConfig:      &quic.Config{},
+		QuicConfig:      &quic.Config{Allow0RTT: true},
 	}
 	client := &http.Client{
 		Transport: roundTripper,
@@ -140,8 +136,57 @@ func clientOneGet(client *http.Client, endpoint string) string {
 	return string(data)
 
 }
-
 func client2() {
+	tlsConf := &tls.Config{
+		RootCAs:            getRootCA(util.GetCertFilePath("certs/cert.pem")),
+		NextProtos:         []string{"quic-echo-example"},
+		KeyLogWriter:       File,
+		ClientSessionCache: tls.NewLRUClientSessionCache(100),
+	}
+
+	rt := &http3.RoundTripper{
+		TLSClientConfig: tlsConf,
+		QuicConfig:      &quic.Config{Allow0RTT: true},
+	}
+
+	endpoint := fmt.Sprintf("https://%s", addr)
+
+	req, err := http.NewRequest(http3.MethodGet0RTT, endpoint, nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err := rt.RoundTrip(req)
+	if err != nil {
+		panic(err)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	resp.Body.Close()
+	fmt.Printf("Client: Got '%s'\n", data)
+
+	endpoint = fmt.Sprintf("https://%s/endpoint-one", addr)
+
+	req, err = http.NewRequest(http3.MethodGet0RTT, endpoint, nil)
+	if err != nil {
+		panic(err)
+	}
+	resp, err = rt.RoundTrip(req)
+	if err != nil {
+		panic(err)
+	}
+
+	data, err = io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	resp.Body.Close()
+	fmt.Printf("Client: Got '%s'\n", data)
+}
+
+func client3() {
 	var message = "hello"
 	tlsConf := &tls.Config{
 		RootCAs:      getRootCA(util.GetCertFilePath("certs/cert.pem")),

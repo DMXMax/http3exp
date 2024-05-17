@@ -69,10 +69,18 @@ func server1() {
 
 	serverName := "server 1"
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %v from %s", r.URL.Path, serverName)
+		fmt.Fprintf(w, "Hello, %v from %s running under Server1", r.URL.Path, serverName)
 	})
 	http.HandleFunc("/endpoint-one", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %v from %s", r.URL.Path, serverName)
+		fmt.Fprintf(w, "Hello, %v from %s running under Server1", r.URL.Path, serverName)
+	})
+
+	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "image/x-icon")
+		if r.Header.Get("Alt-Used") != "" {
+			http.ServeFile(w, r, "go-favicon.jpg")
+		}
+		w.WriteHeader(http.StatusOK)
 	})
 
 	/*if len(os.Args) > 1 {

@@ -30,7 +30,7 @@ func main() {
 	//lazy wait for server to come up
 	time.Sleep(1 * time.Second)
 
-	for _ = range repeats {
+	for range repeats {
 		err = client.RunClient(clientVersion)
 		if err != nil {
 			log.Fatalf("Error: %v", err)

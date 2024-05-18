@@ -40,9 +40,10 @@ func server0() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Greetings, %v from %s", r.URL.Path, serverName)
+		fmt.Fprintf(w, "\nProtocol: %s", r.Proto)
 	})
 	mux.HandleFunc("/endpoint-one", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %v from %s", r.URL.Path, serverName)
+		fmt.Fprintf(w, "\n<br>Hello, %v from %s", r.URL.Path, serverName)
 	})
 	srv := &http.Server{
 		Addr:    addr,
@@ -52,7 +53,7 @@ func server0() {
 	pair := getCertificatePair()
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{pair},
-		NextProtos:   []string{"http/1.1"},
+		NextProtos:   []string{"http/2.0"},
 	}
 	srv.TLSConfig = tlsConfig
 
@@ -77,10 +78,14 @@ func server1() {
 
 	http.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/x-icon")
-		if r.Header.Get("Alt-Used") != "" {
-			http.ServeFile(w, r, "go-favicon.jpg")
+		if r.ProtoMajor == 3 { // HTTP/3
+
+			http.ServeFile(w, r, "three.png")
+		} else {
+			w.Header().Set("Content-Type", "plain/text")
+			http.ServeFile(w, r, "two.png")
 		}
-		w.WriteHeader(http.StatusOK)
+
 	})
 
 	/*if len(os.Args) > 1 {

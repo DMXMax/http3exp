@@ -13,7 +13,9 @@ go run . [opts]
 | option | description | default |
 | -| - | -: |
 | -s | Server to Run |0|
-| -c | Client to Run -1 means don't run a client | -1 |
+| -c | Client to Run -1 means don't run a client <br> Not running a client puts the server in blocking mode | -1 |
+| | | |
+
 
 Not all server/client pairs work with each other.
 Server 1 and 2 work with a browser

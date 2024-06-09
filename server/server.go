@@ -80,10 +80,9 @@ func server1() {
 		w.Header().Set("Content-Type", "image/x-icon")
 		if r.ProtoMajor == 3 { // HTTP/3
 
-			http.ServeFile(w, r, "three.png")
+			http.ServeFile(w, r, "server/three.png")
 		} else {
-			w.Header().Set("Content-Type", "plain/text")
-			http.ServeFile(w, r, "two.png")
+			http.ServeFile(w, r, "server/two.png")
 		}
 
 	})

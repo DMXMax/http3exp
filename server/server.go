@@ -53,7 +53,7 @@ func server0() {
 	pair := getCertificatePair()
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{pair},
-		NextProtos:   []string{"http/2.0"},
+		NextProtos:   nil,
 	}
 	srv.TLSConfig = tlsConfig
 
@@ -110,7 +110,7 @@ func server2() {
 	})
 	tls := &tls.Config{
 		Certificates: []tls.Certificate{getCertificatePair()},
-		NextProtos:   []string{"quic-echo-example"},
+		NextProtos:   nil,
 	}
 	srv := &http3.Server{
 		Addr:       addr,

@@ -30,9 +30,6 @@ func RunClient(clientVersion int) error {
 	}
 	if clientVersion > -1 {
 		var err error
-		// if you hard-code this file name, and its your home dir,
-		// your code leaks information about machine configureation.
-		// so, we use os.UserHomeDir
 		fn, err := os.UserHomeDir()
 		if err != nil {
 			panic(err)
@@ -97,7 +94,7 @@ func client0Get(client *http.Client, endpoint string) {
 func client1() {
 	tlsConf := &tls.Config{
 		RootCAs:            getRootCA(util.GetCertFilePath("certs/cert.pem")),
-		NextProtos:         []string{"quic-echo-example"},
+		NextProtos:         nil,
 		KeyLogWriter:       File,
 		ClientSessionCache: tls.NewLRUClientSessionCache(100),
 	}

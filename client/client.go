@@ -136,7 +136,7 @@ func clientOneGet(client *http.Client, endpoint string) string {
 func client2() {
 	tlsConf := &tls.Config{
 		RootCAs:            getRootCA(util.GetCertFilePath("certs/cert.pem")),
-		NextProtos:         []string{"quic-echo-example"},
+		NextProtos:         nil,
 		KeyLogWriter:       File,
 		ClientSessionCache: tls.NewLRUClientSessionCache(100),
 	}
@@ -189,7 +189,7 @@ func client3() {
 		RootCAs:      getRootCA(util.GetCertFilePath("certs/cert.pem")),
 		KeyLogWriter: File,
 		//InsecureSkipVerify: true,
-		NextProtos: []string{"quic-echo-example"},
+		NextProtos: nil,
 	}
 	conn, err := quic.DialAddr(context.Background(), "localhost:8443", tlsConf, nil)
 	if err != nil {

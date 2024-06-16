@@ -130,7 +130,7 @@ func server2() {
 // server3 is a QUIC server that echos all data on the first stream opened by the client
 // server 3 is NOT an HTTP server, so HTTP clients will have a hard time with it.
 func server3() {
-	addr := "localhost:8443"
+	//addr := "localhost:8443"
 
 	/*listener, err := quic.ListenAddr(addr, &tls.Config{
 		Certificates: []tls.Certificate{getCertificatePair()},
@@ -138,7 +138,7 @@ func server3() {
 	},*/
 	listener, err := quic.ListenAddrEarly(addr, &tls.Config{
 		Certificates: []tls.Certificate{getCertificatePair()},
-		NextProtos:   []string{"quic-echo-example"},
+		NextProtos:   nil,
 	}, &quic.Config{
 		Allow0RTT: true,
 	})
@@ -146,6 +146,9 @@ func server3() {
 		log.Fatalf("Error: %v", err)
 	}
 	defer listener.Close()
+
+	log.Println("Listening on", addr)
+	log.Println("server 3 listens and serves raw QUIC, without HTTP/3")
 
 	conn, err := listener.Accept(context.Background())
 	if err != nil {

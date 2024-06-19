@@ -101,7 +101,7 @@ func client1() {
 
 	roundTripper := &http3.RoundTripper{
 		TLSClientConfig: tlsConf,
-		QuicConfig:      &quic.Config{Allow0RTT: true},
+		QUICConfig:      &quic.Config{Allow0RTT: true},
 	}
 	client := &http.Client{
 		Transport: roundTripper,
@@ -143,7 +143,7 @@ func client2() {
 
 	rt := &http3.RoundTripper{
 		TLSClientConfig: tlsConf,
-		QuicConfig:      &quic.Config{Allow0RTT: true},
+		QUICConfig:      &quic.Config{Allow0RTT: true},
 	}
 
 	endpoint := fmt.Sprintf("https://%s", addr)

@@ -115,7 +115,7 @@ func server2() {
 		Addr:       addr,
 		Handler:    mux,
 		TLSConfig:  http3.ConfigureTLSConfig(tls),
-		QuicConfig: &quic.Config{Allow0RTT: true},
+		QUICConfig: &quic.Config{Allow0RTT: true},
 	}
 
 	// ... add HTTP handlers to mux ...

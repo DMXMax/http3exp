@@ -92,7 +92,7 @@ func server1() {
 	}*/
 	log.Println("server 1 listens and servers HTTP/3")
 	//must use http3 server to get TCP as well as QUIC
-	log.Fatal(http3.ListenAndServe(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), nil))
+	log.Fatal(http3.ListenAndServeTLS(addr, util.GetCertFilePath(certPath), util.GetCertFilePath(keyPath), nil))
 
 }
 

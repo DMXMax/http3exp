@@ -2,6 +2,9 @@
 
 set -e
 
+# Set OpenSSL config path for Homebrew installations
+export OPENSSL_CONF="/usr/local/opt/openssl@3/.bottle/etc/openssl@3/openssl.cnf"
+
 echo "Generating CA key and certificate:"
 openssl req -x509 -sha256 -noenc -days 7 -newkey rsa:2048 \
   -keyout ca.key -out ca.pem \

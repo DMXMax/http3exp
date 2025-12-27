@@ -99,12 +99,13 @@ func client1() {
 		ClientSessionCache: tls.NewLRUClientSessionCache(100),
 	}
 
-	roundTripper := &http3.RoundTripper{
+	transport := &http3.Transport{
 		TLSClientConfig: tlsConf,
 		QUICConfig:      &quic.Config{Allow0RTT: true},
 	}
+	defer transport.Close()
 	client := &http.Client{
-		Transport: roundTripper,
+		Transport: transport,
 	}
 	endpoint := fmt.Sprintf("https://%s", addr)
 	data := clientOneGet(client, endpoint)
@@ -141,10 +142,11 @@ func client2() {
 		ClientSessionCache: tls.NewLRUClientSessionCache(100),
 	}
 
-	rt := &http3.RoundTripper{
+	rt := &http3.Transport{
 		TLSClientConfig: tlsConf,
 		QUICConfig:      &quic.Config{Allow0RTT: true},
 	}
+	defer rt.Close()
 
 	endpoint := fmt.Sprintf("https://%s", addr)
 
